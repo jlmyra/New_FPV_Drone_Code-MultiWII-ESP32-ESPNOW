@@ -26,21 +26,30 @@ typedef struct struct_message {
 
 struct_message MyData;
 
-// Structure to send acknowledgment data back to transmitter
+// Structure to send telemetry data back to transmitter
 typedef struct struct_ack {
-  float lat;
-  float lon;
-  int16_t heading;
-  int16_t pitch;
-  int16_t roll;
-  int32_t alt;
-  uint8_t flags;
+  uint8_t vbat;       // Battery voltage in 0.1V units (e.g., 37 = 3.7V)
+  uint8_t rssi;       // Signal strength (0-100%)
+  int16_t heading;    // Compass heading in degrees
+  int16_t pitch;      // Pitch angle in 0.1 degrees
+  int16_t roll;       // Roll angle in 0.1 degrees
+  int16_t alt;        // Altitude in cm
+  uint8_t flags;      // Status flags: bit0=armed, bit1=angle, bit2=horizon, etc.
 } struct_ack;
 
 struct_ack espnowAckPayload;
 
+// Transmitter peer info for sending telemetry
+static esp_now_peer_info_t txPeerInfo;
+static uint8_t txMacAddress[6] = {0};
+static bool txPeerAdded = false;
+
 static unsigned long lastRecvTime = 0;
 static bool dataReceived = false;
+static int8_t lastRssi = 0;
+
+// Failsafe timeout in milliseconds
+#define ESPNOW_FAILSAFE_TIMEOUT 500
 
 void resetESPNOWData()
 {
@@ -55,8 +64,8 @@ void resetESPNOWData()
 
 void resetESPNOWAckPayload()
 {
-  espnowAckPayload.lat = 0;
-  espnowAckPayload.lon = 0;
+  espnowAckPayload.vbat = 0;
+  espnowAckPayload.rssi = 0;
   espnowAckPayload.heading = 0;
   espnowAckPayload.pitch = 0;
   espnowAckPayload.roll = 0;
@@ -65,11 +74,31 @@ void resetESPNOWAckPayload()
 }
 
 // Callback function executed when data is received
-// ESP32 Arduino Core 2.x uses esp_now_recv_info structure
 void OnDataRecv(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len) {
   memcpy(&MyData, incomingData, sizeof(MyData));
   dataReceived = true;
   lastRecvTime = millis();
+
+  // Store RSSI for signal quality reporting
+  lastRssi = recv_info->rx_ctrl->rssi;
+
+  // Add transmitter as peer if not already added (for sending telemetry back)
+  if (!txPeerAdded) {
+    memcpy(txMacAddress, recv_info->src_addr, 6);
+    memcpy(txPeerInfo.peer_addr, txMacAddress, 6);
+    txPeerInfo.channel = 0;
+    txPeerInfo.encrypt = false;
+
+    if (esp_now_add_peer(&txPeerInfo) == ESP_OK) {
+      txPeerAdded = true;
+      Serial.print("Transmitter paired: ");
+      for (int i = 0; i < 6; i++) {
+        Serial.printf("%02X", txMacAddress[i]);
+        if (i < 5) Serial.print(":");
+      }
+      Serial.println();
+    }
+  }
 }
 
 void ESPNOW_Init() {
@@ -99,27 +128,37 @@ void ESPNOW_Read_RC() {
 
   unsigned long now = millis();
 
-  // Check if data was lost (no signal for more than 1 second)
-  if (now - lastRecvTime > 1000) {
+  // Check if data was lost (failsafe after 500ms)
+  if (now - lastRecvTime > ESPNOW_FAILSAFE_TIMEOUT) {
     // Signal lost - reset to safe values
     resetESPNOWData();
   }
 
-  // Prepare acknowledgment payload with current drone status
-  espnowAckPayload.lat = 35.62;
-  espnowAckPayload.lon = 139.68;
+  // Prepare telemetry payload with current drone status
+  espnowAckPayload.vbat = analog.vbat;  // Already in 0.1V units from MultiWii
+  espnowAckPayload.rssi = map(constrain(lastRssi, -100, -30), -100, -30, 0, 100);  // Convert dBm to 0-100%
   espnowAckPayload.heading = att.heading;
   espnowAckPayload.pitch = att.angle[PITCH];
   espnowAckPayload.roll = att.angle[ROLL];
-  espnowAckPayload.alt = alt.EstAlt;
-  memcpy(&espnowAckPayload.flags, &f, 1); // first byte of status flags
+  espnowAckPayload.alt = constrain(alt.EstAlt, -32768, 32767);  // Clamp to int16 range
+  espnowAckPayload.flags = 0;
+  if (f.ARMED) espnowAckPayload.flags |= 0x01;
+  if (f.ANGLE_MODE) espnowAckPayload.flags |= 0x02;
+  if (f.HORIZON_MODE) espnowAckPayload.flags |= 0x04;
+  if (f.BARO_MODE) espnowAckPayload.flags |= 0x08;
+
+  // Send telemetry back to transmitter (if paired)
+  if (txPeerAdded) {
+    esp_now_send(txMacAddress, (uint8_t *)&espnowAckPayload, sizeof(espnowAckPayload));
+  }
 
   // Map received data to RC channels
-  // If your channels are inverted, reverse the map values
+  // Standard mapping: Left stick = Throttle/Yaw, Right stick = Pitch/Roll
+  // If your channels are inverted, reverse the map values (swap 1000/2000)
   espnow_rcData[THROTTLE] = map(MyData.throttle, 0, 255, 2000, 1000);
-  espnow_rcData[ROLL] =     map(MyData.yaw,      0, 255, 2000, 1000);
+  espnow_rcData[YAW] =      map(MyData.yaw,      0, 255, 2000, 1000);
   espnow_rcData[PITCH] =    map(MyData.pitch,    0, 255, 1000, 2000);
-  espnow_rcData[YAW] =      map(MyData.roll,     0, 255, 2000, 1000);
+  espnow_rcData[ROLL] =     map(MyData.roll,     0, 255, 2000, 1000);
 
   espnow_rcData[AUX1] =     map(MyData.AUX1,     0, 1, 2000, 1000);
   espnow_rcData[AUX2] =     map(MyData.AUX2,     0, 1, 2000, 1000);
