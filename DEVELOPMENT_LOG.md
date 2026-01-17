@@ -155,6 +155,39 @@ Your ESP32 transmitter must:
 
 ---
 
+## Session: January 16, 2026
+
+**Developer:** jlmyra
+**AI Assistant:** Claude Opus 4.5
+
+### Summary
+
+Added buzzer driver circuit documentation using 2N2222 NPN transistor.
+
+### Changes Made
+
+#### 1. Buzzer Circuit Documentation
+
+**Problem:** ESP32 GPIO can only source ~12mA, insufficient for most buzzers
+
+**Solution:** Documented 2N2222 transistor driver circuit with:
+- 1kΩ base resistor
+- Optional 1N4148 flyback diode for magnetic buzzers
+- Schematic, component list, and pinout diagram
+
+**Files:** README.md:31-79
+
+### Hardware Documentation Added
+
+| Component | Details |
+|-----------|---------|
+| Q1 | 2N2222 NPN transistor (TO-92) |
+| R1 | 1kΩ base current limiter |
+| D1 | 1N4148 flyback diode (optional) |
+| Buzzer | 3.3V-5V passive recommended |
+
+---
+
 ## Known Limitations
 
 1. **Battery:** Requires voltage divider for 1S LiPo (4.2V max)

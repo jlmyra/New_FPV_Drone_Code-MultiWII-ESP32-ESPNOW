@@ -44,6 +44,18 @@ Before committing changes:
 2. Check no strapping pins are used incorrectly
 3. Ensure platform guards wrap AVR-specific code
 
+## Hardware Circuits
+
+### Buzzer (GPIO 32)
+Uses 2N2222 NPN transistor driver:
+- Base: 1kΩ resistor to GPIO 32
+- Collector: Buzzer negative
+- Emitter: GND
+- Buzzer positive: 3.3V or 5V
+- Optional: 1N4148 flyback diode for magnetic buzzers
+
+See [README.md](README.md) for full schematic.
+
 ## Related Documentation
 
 - [ESP32_README.md](ESP32_README.md) - Complete hardware/software setup
