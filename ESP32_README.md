@@ -182,7 +182,7 @@ ESP-NOW is a connectionless Wi-Fi communication protocol developed by Espressif.
 You'll need a separate ESP32 board configured as a transmitter. The transmitter should send RC data in this structure:
 
 ```cpp
-typedef struct struct_message {
+typedef struct __attribute__((packed)) struct_message {
   uint8_t throttle;  // 0-255
   uint8_t yaw;       // 0-255
   uint8_t pitch;     // 0-255

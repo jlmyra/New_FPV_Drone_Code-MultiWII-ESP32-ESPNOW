@@ -29,6 +29,56 @@ This is a modified version of the MultiWii brushed drone flight controller, adap
 - **LED**: GPIO33
 - **Battery Voltage Monitor**: GPIO34 (ADC input)
 
+### Buzzer Circuit (2N2222 Driver)
+
+The ESP32 GPIO can only source ~12mA, which isn't enough for most buzzers. Use a 2N2222 NPN transistor to drive the buzzer:
+
+**Schematic:**
+```
+        +3.3V (or +5V)
+            │
+            │
+         [Buzzer]
+            │
+            ├───────|◁────────┐  (1N4148 flyback diode, cathode to +V)
+            │                 │
+            C                 │
+      ┌─────┤ 2N2222          │
+      │     B                 │
+      │     │                 │
+      │  [1kΩ]                │
+      │     │                 │
+      │  GPIO 32              │
+      │                       │
+      E                       │
+      │                       │
+     GND ─────────────────────┘
+```
+
+**Components:**
+| Component | Value | Purpose |
+|-----------|-------|---------|
+| R1 | 1kΩ | Base current limiter |
+| Q1 | 2N2222 | NPN switching transistor |
+| D1 | 1N4148 | Flyback diode (optional, recommended for magnetic buzzers) |
+| Buzzer | 3.3V-5V | Passive buzzer recommended (responds to 2kHz PWM) |
+
+**2N2222 Pinout (TO-92 package, flat side facing you):**
+```
+  E  B  C
+  │  │  │
+  └──┴──┘
+```
+- **E** (Emitter, left) → GND
+- **B** (Base, center) → 1kΩ resistor → GPIO 32
+- **C** (Collector, right) → Buzzer negative terminal
+
+**Notes:**
+- Use a **passive buzzer** for best results - it will produce a 2kHz tone from the PWM signal
+- Active buzzers work but the PWM is unnecessary (simple HIGH/LOW would suffice)
+- The flyback diode protects the transistor from back-EMF (only needed for magnetic buzzers, not piezo)
+- Buzzer positive terminal connects to +3.3V or +5V depending on buzzer rating
+
 ## Pin Configuration
 
 | Component | GPIO Pin | Notes |
@@ -182,7 +232,7 @@ ESP-NOW is a connectionless Wi-Fi communication protocol developed by Espressif.
 You'll need a separate ESP32 board configured as a transmitter. The transmitter should send RC data in this structure:
 
 ```cpp
-typedef struct struct_message {
+typedef struct __attribute__((packed)) struct_message {
   uint8_t throttle;  // 0-255
   uint8_t yaw;       // 0-255
   uint8_t pitch;     // 0-255

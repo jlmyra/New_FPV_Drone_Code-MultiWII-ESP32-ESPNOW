@@ -14,7 +14,7 @@
 int16_t espnow_rcData[RC_CHANS];
 
 // Structure to receive data - must match transmitter structure
-typedef struct struct_message {
+typedef struct __attribute__((packed)) struct_message {
   uint8_t throttle;
   uint8_t yaw;
   uint8_t pitch;
@@ -27,7 +27,7 @@ typedef struct struct_message {
 struct_message MyData;
 
 // Structure to send telemetry data back to transmitter
-typedef struct struct_ack {
+typedef struct __attribute__((packed)) struct_ack {
   uint8_t vbat;       // Battery voltage in 0.1V units (e.g., 37 = 3.7V)
   uint8_t rssi;       // Signal strength (0-100%)
   int16_t heading;    // Compass heading in degrees
@@ -46,7 +46,7 @@ static bool txPeerAdded = false;
 
 static unsigned long lastRecvTime = 0;
 static bool dataReceived = false;
-static int8_t lastRssi = 0;
+static float smoothedRssi = -60.0; // Initialize with a reasonable value
 
 // Failsafe timeout in milliseconds
 #define ESPNOW_FAILSAFE_TIMEOUT 500
@@ -75,12 +75,14 @@ void resetESPNOWAckPayload()
 
 // Callback function executed when data is received
 void OnDataRecv(const esp_now_recv_info *recv_info, const uint8_t *incomingData, int len) {
+  if (len != sizeof(MyData)) return; // Safety check: ignore packets of wrong size
   memcpy(&MyData, incomingData, sizeof(MyData));
   dataReceived = true;
   lastRecvTime = millis();
 
   // Store RSSI for signal quality reporting
-  lastRssi = recv_info->rx_ctrl->rssi;
+  // Simple Exponential Moving Average (EMA) for smoothing
+  smoothedRssi = (smoothedRssi * 0.9) + (recv_info->rx_ctrl->rssi * 0.1);
 
   // Add transmitter as peer if not already added (for sending telemetry back)
   if (!txPeerAdded) {
@@ -136,7 +138,7 @@ void ESPNOW_Read_RC() {
 
   // Prepare telemetry payload with current drone status
   espnowAckPayload.vbat = analog.vbat;  // Already in 0.1V units from MultiWii
-  espnowAckPayload.rssi = map(constrain(lastRssi, -100, -30), -100, -30, 0, 100);  // Convert dBm to 0-100%
+  espnowAckPayload.rssi = map(constrain((int)smoothedRssi, -100, -30), -100, -30, 0, 100);  // Convert dBm to 0-100%
   espnowAckPayload.heading = att.heading;
   espnowAckPayload.pitch = att.angle[PITCH];
   espnowAckPayload.roll = att.angle[ROLL];
@@ -155,7 +157,7 @@ void ESPNOW_Read_RC() {
   // Map received data to RC channels
   // Standard mapping: Left stick = Throttle/Yaw, Right stick = Pitch/Roll
   // If your channels are inverted, reverse the map values (swap 1000/2000)
-  espnow_rcData[THROTTLE] = map(MyData.throttle, 0, 255, 2000, 1000);
+  espnow_rcData[THROTTLE] = map(MyData.throttle, 0, 255, 1000, 2000);
   espnow_rcData[YAW] =      map(MyData.yaw,      0, 255, 2000, 1000);
   espnow_rcData[PITCH] =    map(MyData.pitch,    0, 255, 1000, 2000);
   espnow_rcData[ROLL] =     map(MyData.roll,     0, 255, 2000, 1000);
