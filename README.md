@@ -229,19 +229,40 @@ ESP-NOW is a connectionless Wi-Fi communication protocol developed by Espressif.
 - Simple peer-to-peer communication
 
 ### Transmitter Setup
-You'll need a separate ESP32 board configured as a transmitter. The transmitter should send RC data in this structure:
+You'll need a separate ESP32 board configured as a transmitter. Two transmitter variants are available:
+
+1. **NEW_FPV_Transmitter_Code_ESP32_ESPNOW** - Standard spring-return joysticks
+2. **Transmitter_ESP32_No_Spring_Joy** - No-spring throttle (linear mapping)
+
+The transmitter must send RC data in this structure (7 bytes):
 
 ```cpp
 typedef struct __attribute__((packed)) struct_message {
-  uint8_t throttle;  // 0-255
-  uint8_t yaw;       // 0-255
-  uint8_t pitch;     // 0-255
-  uint8_t roll;      // 0-255
-  uint8_t AUX1;      // 0 or 1
-  uint8_t AUX2;      // 0 or 1
-  uint8_t switches;  // Bit flags
+  uint8_t throttle;  // 0-255, mapped to 1000-2000µs
+  uint8_t yaw;       // 0-255, mapped to 2000-1000µs (inverted)
+  uint8_t pitch;     // 0-255, mapped to 1000-2000µs
+  uint8_t roll;      // 0-255, mapped to 2000-1000µs (inverted)
+  uint8_t AUX1;      // 0 or 1, flight mode switch
+  uint8_t AUX2;      // 0 or 1, secondary function
+  uint8_t switches;  // Bit flags: bit0=left btn, bit1=right btn
 } struct_message;
 ```
+
+The drone sends telemetry back (11 bytes):
+
+```cpp
+typedef struct __attribute__((packed)) struct_ack {
+  uint8_t vbat;       // Battery voltage (0.1V units, 37 = 3.7V)
+  uint8_t rssi;       // Signal strength (0-100%)
+  int16_t heading;    // Compass heading (degrees)
+  int16_t pitch;      // Pitch angle (0.1 degrees)
+  int16_t roll;       // Roll angle (0.1 degrees)
+  int16_t alt;        // Altitude (cm)
+  uint8_t flags;      // bit0=armed, bit1=angle, bit2=horizon, bit3=baro
+} struct_ack;
+```
+
+**CRITICAL:** Both structures must use `__attribute__((packed))` to ensure binary compatibility between transmitter and receiver.
 
 ### Getting Your ESP32 MAC Address
 When you first upload and run the code:
@@ -331,13 +352,22 @@ To change PWM frequency, edit `Output_ESP32.cpp`:
 
 ## Channel Mapping
 
-Default channel mapping (can be changed in `ESP_NOW_RX.cpp` line 105):
-- Channel 1 (THROTTLE): 2000-1000 (inverted)
-- Channel 2 (ROLL): 2000-1000 (inverted)
-- Channel 3 (PITCH): 1000-2000 (normal)
-- Channel 4 (YAW): 2000-1000 (inverted)
-- Channel 5 (AUX1): 2000-1000
-- Channel 6 (AUX2): 2000-1000
+Default channel mapping (defined in `ESP_NOW_RX.cpp`):
+
+| Channel | Name | Range | Source |
+|---------|------|-------|--------|
+| 1 | THROTTLE | 1000-2000 | Left stick Y |
+| 2 | YAW | 2000-1000 (inverted) | Left stick X |
+| 3 | PITCH | 1000-2000 | Right stick Y |
+| 4 | ROLL | 2000-1000 (inverted) | Right stick X |
+| 5 | AUX1 | 1000/2000 | Toggle switch 1 |
+| 6 | AUX2 | 1000/2000 | Toggle switch 2 |
+| 7 | AUX3 | 1000/2000 | Left joystick button |
+| 8 | AUX4 | 1000/2000 | Right joystick button |
+
+**Joystick Buttons:** The `switches` byte from the transmitter is mapped to AUX3/AUX4:
+- bit0 (left button) → AUX3
+- bit1 (right button) → AUX4 (can be used for BOXBEEPERON)
 
 To invert a channel, swap the map() function parameters.
 

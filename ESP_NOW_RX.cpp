@@ -46,10 +46,15 @@ static bool txPeerAdded = false;
 
 static unsigned long lastRecvTime = 0;
 static bool dataReceived = false;
-static float smoothedRssi = -60.0; // Initialize with a reasonable value
+static float smoothedRssi = 0; // Will be set to actual value on first packet
+static bool rssiInitialized = false;
+static unsigned long lastTelemetryTime = 0;
 
 // Failsafe timeout in milliseconds
 #define ESPNOW_FAILSAFE_TIMEOUT 500
+
+// Telemetry rate (10Hz = every 100ms, matches transmitter LCD update rate)
+#define TELEMETRY_INTERVAL_MS 100
 
 void resetESPNOWData()
 {
@@ -81,8 +86,13 @@ void OnDataRecv(const esp_now_recv_info *recv_info, const uint8_t *incomingData,
   lastRecvTime = millis();
 
   // Store RSSI for signal quality reporting
-  // Simple Exponential Moving Average (EMA) for smoothing
-  smoothedRssi = (smoothedRssi * 0.9) + (recv_info->rx_ctrl->rssi * 0.1);
+  // Initialize with first actual reading, then use EMA for smoothing
+  if (!rssiInitialized) {
+    smoothedRssi = recv_info->rx_ctrl->rssi;
+    rssiInitialized = true;
+  } else {
+    smoothedRssi = (smoothedRssi * 0.9) + (recv_info->rx_ctrl->rssi * 0.1);
+  }
 
   // Add transmitter as peer if not already added (for sending telemetry back)
   if (!txPeerAdded) {
@@ -149,8 +159,10 @@ void ESPNOW_Read_RC() {
   if (f.HORIZON_MODE) espnowAckPayload.flags |= 0x04;
   if (f.BARO_MODE) espnowAckPayload.flags |= 0x08;
 
-  // Send telemetry back to transmitter (if paired)
-  if (txPeerAdded) {
+  // Send telemetry back to transmitter at 10Hz (if paired)
+  // This matches the transmitter's LCD update rate and reduces ESP-NOW traffic
+  if (txPeerAdded && (now - lastTelemetryTime >= TELEMETRY_INTERVAL_MS)) {
+    lastTelemetryTime = now;
     esp_now_send(txMacAddress, (uint8_t *)&espnowAckPayload, sizeof(espnowAckPayload));
   }
 
@@ -162,8 +174,16 @@ void ESPNOW_Read_RC() {
   espnow_rcData[PITCH] =    map(MyData.pitch,    0, 255, 1000, 2000);
   espnow_rcData[ROLL] =     map(MyData.roll,     0, 255, 2000, 1000);
 
-  espnow_rcData[AUX1] =     map(MyData.AUX1,     0, 1, 2000, 1000);
-  espnow_rcData[AUX2] =     map(MyData.AUX2,     0, 1, 2000, 1000);
+  // AUX switches: TX sends 1 when switch is ON (due to !digitalRead with INPUT_PULLUP)
+  // Map: 1 (ON) -> 2000 (high), 0 (OFF) -> 1000 (low)
+  espnow_rcData[AUX1] =     map(MyData.AUX1,     0, 1, 1000, 2000);
+  espnow_rcData[AUX2] =     map(MyData.AUX2,     0, 1, 1000, 2000);
+
+  // Map joystick buttons from switches byte to AUX3/AUX4
+  // bit0 = left joystick button  -> AUX3
+  // bit1 = right joystick button -> AUX4 (can be used for BOXBEEPERON)
+  espnow_rcData[AUX3] =     (MyData.switches & 0x01) ? 2000 : 1000;
+  espnow_rcData[AUX4] =     (MyData.switches & 0x02) ? 2000 : 1000;
 }
 
 #endif

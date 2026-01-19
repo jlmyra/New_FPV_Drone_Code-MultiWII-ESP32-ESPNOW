@@ -194,6 +194,111 @@ Added buzzer driver circuit documentation using 2N2222 NPN transistor.
 2. **ESP32 Core:** Requires version 3.x (tested with 3.0.7)
 3. **Motors:** Brushed only (32kHz PWM)
 
+---
+
+## Session: January 16, 2026 (Part 2)
+
+**Developer:** jlmyra
+**AI Assistant:** Claude Opus 4.5
+
+### Summary
+
+Verified data packet alignment between flight controller receiver and both transmitter variants. Added `__attribute__((packed))` to transmitter code for guaranteed binary compatibility.
+
+### Changes Made
+
+#### 1. Data Packet Alignment Verification
+
+**Analysis:** Compared `struct_message` and `struct_ack` between:
+- `ESP_NOW_RX.cpp` (flight controller receiver)
+- `NEW_FPV_Transmitter_Code_ESP32_ESPNOW.ino` (spring-return joysticks)
+- `Transmitter_ESP32_No_Spring_Joy.ino` (no-spring throttle)
+
+**Result:** All structures aligned correctly:
+
+| Structure | Size | Fields |
+|-----------|------|--------|
+| `struct_message` | 7 bytes | throttle, yaw, pitch, roll, AUX1, AUX2, switches |
+| `struct_ack` | 11 bytes | vbat, rssi, heading, pitch, roll, alt, flags |
+
+#### 2. Added `__attribute__((packed))` to Transmitter
+
+**Problem:** Receiver used `__attribute__((packed))` but standard transmitter did not
+
+**Solution:** Added `__attribute__((packed))` to both structs in `NEW_FPV_Transmitter_Code_ESP32_ESPNOW.ino`
+
+**Files Modified:**
+- `NEW_FPV_Transmitter_Code_ESP32_ESPNOW.ino:76` - `struct_message`
+- `NEW_FPV_Transmitter_Code_ESP32_ESPNOW.ino:87` - `struct_ack`
+
+**Note:** `Transmitter_ESP32_No_Spring_Joy.ino` already had packed structs (no changes needed)
+
+#### 3. Documentation Updates
+
+Updated documentation to reflect transmitter variants and data structure requirements:
+- `README.md` - Added both transmitter variants and telemetry structure
+- `CLAUDE.md` - Added transmitter references and sync instructions
+- `DEVELOPMENT_LOG.md` - This session entry
+
+### Transmitter Variants Documented
+
+| Variant | Features |
+|---------|----------|
+| `NEW_FPV_Transmitter_Code_ESP32_ESPNOW` | Spring-return joysticks, 10-bit calibration scale |
+| `Transmitter_ESP32_No_Spring_Joy` | Linear throttle mapping, input smoothing (EMA), deadzone, 12-bit ADC |
+
+---
+
+## Session: January 16, 2026 (Part 3)
+
+**Developer:** jlmyra
+**AI Assistant:** Claude Opus 4.5
+
+### Summary
+
+Mapped joystick buttons to AUX3/AUX4 channels to enable additional flight controller functions like buzzer activation.
+
+### Changes Made
+
+#### 1. Joystick Button to AUX Channel Mapping
+
+**Problem:** The `switches` byte in `struct_message` was transmitted but not mapped to any RC channel
+
+**Solution:** Added mapping in `ESP_NOW_RX.cpp` to decode joystick buttons to AUX3/AUX4
+
+**Code Added:**
+```cpp
+// Map joystick buttons from switches byte to AUX3/AUX4
+// bit0 = left joystick button  -> AUX3
+// bit1 = right joystick button -> AUX4 (can be used for BOXBEEPERON)
+espnow_rcData[AUX3] = (MyData.switches & 0x01) ? 2000 : 1000;
+espnow_rcData[AUX4] = (MyData.switches & 0x02) ? 2000 : 1000;
+```
+
+**Files Modified:**
+- `ESP_NOW_RX.cpp:171-175`
+
+### RC Channel Summary
+
+| Channel | Source | Purpose |
+|---------|--------|---------|
+| THROTTLE | Left stick Y | Motor power |
+| YAW | Left stick X | Rotation |
+| PITCH | Right stick Y | Forward/back tilt |
+| ROLL | Right stick X | Left/right tilt |
+| AUX1 | Toggle switch 1 | Flight mode (e.g., ANGLE) |
+| AUX2 | Toggle switch 2 | Secondary function |
+| AUX3 | Left joystick button | Available for box functions |
+| AUX4 | Right joystick button | BOXBEEPERON (buzzer) |
+
+### Buzzer Activation
+
+To activate the buzzer with the right joystick button:
+1. Configure BOXBEEPERON to respond to AUX4 HIGH via MultiWii GUI or config
+2. Press right joystick button → AUX4 goes HIGH (2000) → buzzer sounds
+
+---
+
 ## Future Considerations
 
 - ADC calibration routine for battery accuracy

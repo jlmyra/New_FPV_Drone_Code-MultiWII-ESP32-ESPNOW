@@ -60,4 +60,26 @@ See [README.md](README.md) for full schematic.
 
 - [ESP32_README.md](ESP32_README.md) - Complete hardware/software setup
 - [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md) - Session history and decisions
-- [examples/ESP_NOW_Transmitter/](examples/ESP_NOW_Transmitter/) - ESP32 transmitter code
+
+## Compatible Transmitters
+
+Located in `../New_FPV_TRANSMITTER_Code-MultiWii_ESP32-ESPNOW/`:
+
+| Transmitter | Use Case |
+|-------------|----------|
+| `NEW_FPV_Transmitter_Code_ESP32_ESPNOW/` | Standard spring-return joysticks |
+| `Transmitter_ESP32_No_Spring_Joy/` | No-spring throttle (linear mapping, input smoothing) |
+
+**Data Structure Alignment:** Both transmitters and this receiver must use identical `__attribute__((packed))` structs:
+- `struct_message` (7 bytes): throttle, yaw, pitch, roll, AUX1, AUX2, switches
+- `struct_ack` (11 bytes): vbat, rssi, heading, pitch, roll, alt, flags
+
+**RC Channel Mapping:**
+- AUX1/AUX2: Toggle switches (0/1 → 1000/2000)
+- AUX3: Left joystick button (switches bit0)
+- AUX4: Right joystick button (switches bit1) - can trigger BOXBEEPERON
+
+When modifying data structures, update ALL THREE locations:
+1. [ESP_NOW_RX.cpp:17-38](ESP_NOW_RX.cpp#L17-L38) (this project)
+2. `NEW_FPV_Transmitter_Code_ESP32_ESPNOW.ino:76-95`
+3. `Transmitter_ESP32_No_Spring_Joy.ino:57-75`
