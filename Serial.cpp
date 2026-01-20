@@ -76,10 +76,19 @@ static uint8_t serialBufferTX[TX_BUFFER_SIZE][UART_NUMBER];
 #endif
 
 void UartSendData(uint8_t port) {
-  #if defined(PROMINI)
+  #if defined(ESP32)
+    // ESP32: Flush the TX buffer by writing all buffered bytes
+    while(serialHeadTX[port] != serialTailTX[port]) {
+      if (++serialTailTX[port] >= TX_BUFFER_SIZE) serialTailTX[port] = 0;
+      switch (port) {
+        case 0: Serial.write(serialBufferTX[serialTailTX[port]][port]); break;
+        case 1: Serial1.write(serialBufferTX[serialTailTX[port]][port]); break;
+        case 2: Serial2.write(serialBufferTX[serialTailTX[port]][port]); break;
+      }
+    }
+  #elif defined(PROMINI)
     UCSR0B |= (1<<UDRIE0);
-  #endif
-  #if defined(PROMICRO)
+  #elif defined(PROMICRO)
     switch (port) {
       case 0:
         while(serialHeadTX[0] != serialTailTX[0]) {
@@ -93,8 +102,7 @@ void UartSendData(uint8_t port) {
         break;
       case 1: UCSR1B |= (1<<UDRIE1); break;
     }
-  #endif
-  #if defined(MEGA)
+  #elif defined(MEGA)
     switch (port) {
       case 0: UCSR0B |= (1<<UDRIE0); break;
       case 1: UCSR1B |= (1<<UDRIE1); break;
@@ -111,42 +119,61 @@ void UartSendData(uint8_t port) {
 #endif
 
 void SerialOpen(uint8_t port, uint32_t baud) {
-  uint8_t h = ((F_CPU  / 4 / baud -1) / 2) >> 8;
-  uint8_t l = ((F_CPU  / 4 / baud -1) / 2);
-  switch (port) {
-    #if defined(PROMINI)
-      case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
-    #endif
-    #if defined(PROMICRO)
-      #if (ARDUINO >= 100) && !defined(TEENSY20)
-        case 0: UDIEN &= ~(1<<SOFE); break;// disable the USB frame interrupt of arduino (it causes strong jitter and we dont need it)
+  #if defined(ESP32)
+    // ESP32 uses Arduino Serial API directly
+    switch (port) {
+      case 0: Serial.begin(baud); break;
+      case 1: Serial1.begin(baud); break;
+      case 2: Serial2.begin(baud); break;
+    }
+  #else
+    // AVR register-based serial initialization
+    uint8_t h = ((F_CPU  / 4 / baud -1) / 2) >> 8;
+    uint8_t l = ((F_CPU  / 4 / baud -1) / 2);
+    switch (port) {
+      #if defined(PROMINI)
+        case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
       #endif
-      case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
-    #endif
-    #if defined(MEGA)
-      case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
-      case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
-      case 2: UCSR2A  = (1<<U2X2); UBRR2H = h; UBRR2L = l; UCSR2B |= (1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2); break;
-      case 3: UCSR3A  = (1<<U2X3); UBRR3H = h; UBRR3L = l; UCSR3B |= (1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3); break;
-    #endif
-  }
+      #if defined(PROMICRO)
+        #if (ARDUINO >= 100) && !defined(TEENSY20)
+          case 0: UDIEN &= ~(1<<SOFE); break;// disable the USB frame interrupt of arduino (it causes strong jitter and we dont need it)
+        #endif
+        case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
+      #endif
+      #if defined(MEGA)
+        case 0: UCSR0A  = (1<<U2X0); UBRR0H = h; UBRR0L = l; UCSR0B |= (1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0); break;
+        case 1: UCSR1A  = (1<<U2X1); UBRR1H = h; UBRR1L = l; UCSR1B |= (1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1); break;
+        case 2: UCSR2A  = (1<<U2X2); UBRR2H = h; UBRR2L = l; UCSR2B |= (1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2); break;
+        case 3: UCSR3A  = (1<<U2X3); UBRR3H = h; UBRR3L = l; UCSR3B |= (1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3); break;
+      #endif
+    }
+  #endif
 }
 
 void SerialEnd(uint8_t port) {
-  switch (port) {
-    #if defined(PROMINI)
-      case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
-    #endif
-    #if defined(PROMICRO)
-      case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
-    #endif
-    #if defined(MEGA)
-      case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
-      case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
-      case 2: UCSR2B &= ~((1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2)|(1<<UDRIE2)); break;
-      case 3: UCSR3B &= ~((1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3)|(1<<UDRIE3)); break;
-    #endif
-  }
+  #if defined(ESP32)
+    // ESP32 uses Arduino Serial API directly
+    switch (port) {
+      case 0: Serial.end(); break;
+      case 1: Serial1.end(); break;
+      case 2: Serial2.end(); break;
+    }
+  #else
+    switch (port) {
+      #if defined(PROMINI)
+        case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
+      #endif
+      #if defined(PROMICRO)
+        case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
+      #endif
+      #if defined(MEGA)
+        case 0: UCSR0B &= ~((1<<RXEN0)|(1<<TXEN0)|(1<<RXCIE0)|(1<<UDRIE0)); break;
+        case 1: UCSR1B &= ~((1<<RXEN1)|(1<<TXEN1)|(1<<RXCIE1)|(1<<UDRIE1)); break;
+        case 2: UCSR2B &= ~((1<<RXEN2)|(1<<TXEN2)|(1<<RXCIE2)|(1<<UDRIE2)); break;
+        case 3: UCSR3B &= ~((1<<RXEN3)|(1<<TXEN3)|(1<<RXCIE3)|(1<<UDRIE3)); break;
+      #endif
+    }
+  #endif
 }
 
 // we don't care about ring buffer overflow (head->tail) to avoid a test condition : data is lost anyway if it happens 
@@ -188,23 +215,33 @@ void store_uart_in_buf(uint8_t data, uint8_t portnum) {
 #endif
 
 uint8_t SerialRead(uint8_t port) {
-  #if defined(PROMICRO)
-    #if defined(TEENSY20)
-      if(port == 0) return Serial.read();
-    #else
-      #if (ARDUINO >= 100)
-        if(port == 0) USB_Flush(USB_CDC_TX);
+  #if defined(ESP32)
+    // ESP32 uses Arduino Serial API directly
+    switch (port) {
+      case 0: return Serial.read();
+      case 1: return Serial1.read();
+      case 2: return Serial2.read();
+      default: return 0;
+    }
+  #else
+    #if defined(PROMICRO)
+      #if defined(TEENSY20)
+        if(port == 0) return Serial.read();
+      #else
+        #if (ARDUINO >= 100)
+          if(port == 0) USB_Flush(USB_CDC_TX);
+        #endif
+        if(port == 0) return USB_Recv(USB_CDC_RX);
       #endif
-      if(port == 0) return USB_Recv(USB_CDC_RX);      
     #endif
+    uint8_t t = serialTailRX[port];
+    uint8_t c = serialBufferRX[t][port];
+    if (serialHeadRX[port] != t) {
+      if (++t >= RX_BUFFER_SIZE) t = 0;
+      serialTailRX[port] = t;
+    }
+    return c;
   #endif
-  uint8_t t = serialTailRX[port];
-  uint8_t c = serialBufferRX[t][port];
-  if (serialHeadRX[port] != t) {
-    if (++t >= RX_BUFFER_SIZE) t = 0;
-    serialTailRX[port] = t;
-  }
-  return c;
 }
 
 #if defined(SERIAL_RX)
@@ -215,14 +252,24 @@ uint8_t SerialRead(uint8_t port) {
 #endif
 
 uint8_t SerialAvailable(uint8_t port) {
-  #if defined(PROMICRO)
-    #if !defined(TEENSY20)
-      if(port == 0) return USB_Available(USB_CDC_RX);
-    #else
-      if(port == 0) return T_USB_Available();
+  #if defined(ESP32)
+    // ESP32 uses Arduino Serial API directly
+    switch (port) {
+      case 0: return Serial.available();
+      case 1: return Serial1.available();
+      case 2: return Serial2.available();
+      default: return 0;
+    }
+  #else
+    #if defined(PROMICRO)
+      #if !defined(TEENSY20)
+        if(port == 0) return USB_Available(USB_CDC_RX);
+      #else
+        if(port == 0) return T_USB_Available();
+      #endif
     #endif
+    return ((uint8_t)(serialHeadRX[port] - serialTailRX[port]))%RX_BUFFER_SIZE;
   #endif
-  return ((uint8_t)(serialHeadRX[port] - serialTailRX[port]))%RX_BUFFER_SIZE;
 }
 
 uint8_t SerialUsedTXBuff(uint8_t port) {
@@ -237,5 +284,14 @@ void SerialSerialize(uint8_t port,uint8_t a) {
 }
 
 void SerialWrite(uint8_t port,uint8_t c){
-  SerialSerialize(port,c);UartSendData(port);
+  #if defined(ESP32)
+    // ESP32 uses Arduino Serial API directly
+    switch (port) {
+      case 0: Serial.write(c); break;
+      case 1: Serial1.write(c); break;
+      case 2: Serial2.write(c); break;
+    }
+  #else
+    SerialSerialize(port,c);UartSendData(port);
+  #endif
 }

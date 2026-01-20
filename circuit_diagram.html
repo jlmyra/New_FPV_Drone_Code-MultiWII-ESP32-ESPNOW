@@ -322,9 +322,9 @@
 
     <div class="page-title">Page 1: ESP32 Pinout Diagram</div>
 
-    <!-- New dual-row board layout matching actual MH-ET LIVE MiniKit -->
+    <!-- Pinout from actual MH-ET LIVE MiniKit board (user-verified) -->
     <div class="board-container">
-        <div class="board-title">ESP32 MH-ET LIVE MiniKit - Component Side View (USB at Bottom)</div>
+        <div class="board-title">ESP32 MH-ET LIVE MiniKit - Top View (USB at Bottom, Antenna at Top)</div>
         <table class="board-table" style="width:100%; border-collapse:collapse; font-size:8px;">
             <!-- Header Row -->
             <tr style="background:#2c3e50; color:white;">
@@ -356,168 +356,175 @@
             </tr>
             <!-- Pin Row 1 (top - antenna end) -->
             <tr>
-                <td class="pin-conn left unused">—</td>
+                <td class="pin-conn left active"><span class="wire-dot wire-black"></span>Ground</td>
                 <td class="pin-label">GND</td>
                 <td class="pin-gpio">—</td>
-                <td class="pin-label">TxD</td>
-                <td class="pin-gpio">1</td>
-                <td class="chip-cell" rowspan="10">ESP32<br>WROOM<br>────<br>WiFi<br>ESP-NOW<br>────<br>MH-ET<br>LIVE<br>────<br><span style="background:#666; padding:1px 4px; border-radius:2px;">▼ USB</span></td>
-                <td class="pin-gpio">3</td>
-                <td class="pin-label">RxD</td>
-                <td class="pin-gpio">—</td>
                 <td class="pin-label">RST</td>
-                <td class="pin-conn right unused">—</td>
+                <td class="pin-gpio">—</td>
+                <td class="chip-cell" rowspan="10">ESP32<br>WROOM<br>────<br>WiFi<br>ESP-NOW<br>────<br>MH-ET<br>LIVE<br>────<br><span style="background:#666; padding:1px 4px; border-radius:2px;">▼ USB</span></td>
+                <td class="pin-gpio">1</td>
+                <td class="pin-label">TXD</td>
+                <td class="pin-gpio">—</td>
+                <td class="pin-label">GND</td>
+                <td class="pin-conn right active"><span class="wire-dot wire-black"></span>Ground</td>
             </tr>
             <!-- Pin Row 2 -->
             <tr>
                 <td class="pin-conn left unused">—</td>
                 <td class="pin-label">NC</td>
                 <td class="pin-gpio">—</td>
+                <td class="pin-label">SVP</td>
+                <td class="pin-gpio">36</td>
+                <td class="pin-gpio">3</td>
+                <td class="pin-label">RXD</td>
+                <td class="pin-gpio">27</td>
+                <td class="pin-label">27</td>
+                <td class="pin-conn right active"><span class="wire-dot wire-yellow"></span>MOTOR 4 (FL)</td>
+            </tr>
+            <!-- Pin Row 3 -->
+            <tr>
+                <td class="pin-conn left unused">(input only)</td>
                 <td class="pin-label">SVN</td>
                 <td class="pin-gpio">39</td>
-                <td class="pin-gpio">18</td>
-                <td class="pin-label">18</td>
-                <td class="pin-gpio">36</td>
-                <td class="pin-label">SVP</td>
-                <td class="pin-conn right unused">—</td>
-            </tr>
-            <!-- Pin Row 3 - SCL/SDA for I2C IMU -->
-            <tr>
-                <td class="pin-conn left active"><span class="wire-dot wire-yellow"></span>MOTOR 4 (FL)</td>
-                <td class="pin-label">27</td>
-                <td class="pin-gpio">27</td>
-                <td class="pin-label" style="background:#e8d4f4;">SCL</td>
-                <td class="pin-gpio">22</td>
-                <td class="pin-gpio">21</td>
-                <td class="pin-label" style="background:#e8d4f4;">SDA</td>
-                <td class="pin-gpio">26</td>
                 <td class="pin-label">26</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-purple"></span>I2C (MPU6050)</td>
+                <td class="pin-gpio">26</td>
+                <td class="pin-gpio">22</td>
+                <td class="pin-label" style="background:#e8d4f4;">22/SCL</td>
+                <td class="pin-gpio">25</td>
+                <td class="pin-label">25</td>
+                <td class="pin-conn right active"><span class="wire-dot wire-yellow"></span>MOTOR 2 (FR)</td>
             </tr>
             <!-- Pin Row 4 -->
             <tr>
-                <td class="pin-conn left active"><span class="wire-dot wire-yellow"></span>MOTOR 2 (FR)</td>
-                <td class="pin-label">25</td>
-                <td class="pin-gpio">25</td>
-                <td class="pin-label">19</td>
-                <td class="pin-gpio">19</td>
-                <td class="pin-gpio">23</td>
-                <td class="pin-label">23</td>
-                <td class="pin-gpio">35</td>
+                <td class="pin-conn left unused">(input only)</td>
                 <td class="pin-label">35</td>
-                <td class="pin-conn right unused">—</td>
+                <td class="pin-gpio">35</td>
+                <td class="pin-label">18</td>
+                <td class="pin-gpio">18</td>
+                <td class="pin-gpio">21</td>
+                <td class="pin-label" style="background:#e8d4f4;">21/SDA</td>
+                <td class="pin-gpio">32</td>
+                <td class="pin-label">32</td>
+                <td class="pin-conn right active"><span class="wire-dot wire-blue"></span>BUZZER</td>
             </tr>
             <!-- Pin Row 5 -->
             <tr>
-                <td class="pin-conn left active"><span class="wire-dot wire-blue"></span>BUZZER</td>
-                <td class="pin-label">32</td>
-                <td class="pin-gpio">32</td>
-                <td class="pin-label">RxD2</td>
-                <td class="pin-gpio">16</td>
-                <td class="pin-gpio">17</td>
-                <td class="pin-label">TxD2</td>
-                <td class="pin-gpio">33</td>
+                <td class="pin-conn left active"><span class="wire-dot wire-green"></span>STATUS LED</td>
                 <td class="pin-label">33</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-green"></span>STATUS LED</td>
-            </tr>
-            <!-- Pin Row 6 - GPIO 14 (TMS) = Motor 3, GPIO 34 = VBAT -->
-            <tr>
-                <td class="pin-conn left unused">strapping</td>
-                <td class="pin-label">TDI</td>
+                <td class="pin-gpio">33</td>
+                <td class="pin-label">19</td>
+                <td class="pin-gpio">19</td>
+                <td class="pin-gpio">17</td>
+                <td class="pin-label">17</td>
                 <td class="pin-gpio">12</td>
-                <td class="pin-label">5</td>
-                <td class="pin-gpio">5</td>
-                <td class="pin-gpio" style="color:#c0392b;">14</td>
-                <td class="pin-label" style="background:#fff3cd;">TMS</td>
-                <td class="pin-gpio">34</td>
-                <td class="pin-label">34</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-yellow"></span>MOTOR 3 (RL) / <span class="wire-dot wire-blue"></span>VBAT</td>
+                <td class="pin-label">TDI</td>
+                <td class="pin-conn right unused">strapping</td>
             </tr>
-            <!-- Pin Row 7 -->
+            <!-- Pin Row 6 -->
             <tr>
-                <td class="pin-conn left unused">—</td>
-                <td class="pin-label">4</td>
+                <td class="pin-conn left active"><span class="wire-dot wire-blue"></span>VBAT ADC</td>
+                <td class="pin-label">34</td>
+                <td class="pin-gpio">34</td>
+                <td class="pin-label">23</td>
+                <td class="pin-gpio">23</td>
+                <td class="pin-gpio">16</td>
+                <td class="pin-label">16</td>
                 <td class="pin-gpio">4</td>
-                <td class="pin-label">3V3</td>
-                <td class="pin-gpio">—</td>
-                <td class="pin-gpio">—</td>
-                <td class="pin-label">GND</td>
-                <td class="pin-gpio">—</td>
-                <td class="pin-label">NC</td>
+                <td class="pin-label">4</td>
                 <td class="pin-conn right unused">—</td>
             </tr>
-            <!-- Pin Row 8 - Motor 1 on GPIO 13 (TCK inside row) -->
+            <!-- Pin Row 7 - Motor 3 on GPIO 14 (TMS) -->
             <tr>
-                <td class="pin-conn left unused">strapping</td>
-                <td class="pin-label">0</td>
+                <td class="pin-conn left active"><span class="wire-dot wire-yellow"></span>MOTOR 3 (RL)</td>
+                <td class="pin-label" style="background:#fff3cd;">TMS</td>
+                <td class="pin-gpio" style="color:#c0392b;">14</td>
+                <td class="pin-label">5</td>
+                <td class="pin-gpio">5</td>
+                <td class="pin-gpio">—</td>
+                <td class="pin-label">GND</td>
                 <td class="pin-gpio">0</td>
-                <td class="pin-label" style="background:#fff3cd;">TCK</td>
-                <td class="pin-gpio" style="color:#c0392b;">13</td>
-                <td class="pin-gpio">6</td>
-                <td class="pin-label">CLK</td>
+                <td class="pin-label">0</td>
+                <td class="pin-conn right unused">strapping</td>
+            </tr>
+            <!-- Pin Row 8 -->
+            <tr>
+                <td class="pin-conn left unused">—</td>
+                <td class="pin-label">NC</td>
                 <td class="pin-gpio">—</td>
                 <td class="pin-label">3V3</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-orange"></span>3.3V Power</td>
-            </tr>
-            <!-- Pin Row 9 - Motor 3 on GPIO 14 (TMS) note: already shown in row 6 -->
-            <tr>
-                <td class="pin-conn left unused">strapping</td>
-                <td class="pin-label">2</td>
-                <td class="pin-gpio">2</td>
-                <td class="pin-label">CMD</td>
-                <td class="pin-gpio">11</td>
-                <td class="pin-gpio">10</td>
-                <td class="pin-label">SD3</td>
                 <td class="pin-gpio">—</td>
-                <td class="pin-label">5V</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-red"></span>VIN Power</td>
+                <td class="pin-gpio">—</td>
+                <td class="pin-label">VCC</td>
+                <td class="pin-gpio">2</td>
+                <td class="pin-label">2</td>
+                <td class="pin-conn right unused">strapping</td>
             </tr>
-            <!-- Pin Row 10 (bottom - USB end) - no chip-cell here, rowspan covers it -->
+            <!-- Pin Row 9 - Motor 1 on GPIO 13 (TCK) -->
             <tr>
                 <td class="pin-conn left unused">flash</td>
                 <td class="pin-label">SD2</td>
                 <td class="pin-gpio">9</td>
-                <td class="pin-label">SD1</td>
+                <td class="pin-label" style="background:#fff3cd;">TCK</td>
+                <td class="pin-gpio" style="color:#c0392b;">13</td>
+                <td class="pin-gpio">15</td>
+                <td class="pin-label">TDO</td>
                 <td class="pin-gpio">8</td>
-                <!-- rowspan from row 1 covers this cell -->
+                <td class="pin-label">SD1</td>
+                <td class="pin-conn right unused">flash</td>
+            </tr>
+            <!-- Pin Row 10 (bottom - USB end) -->
+            <tr>
+                <td class="pin-conn left active"><span class="wire-dot wire-black"></span>Ground</td>
+                <td class="pin-label">GND</td>
+                <td class="pin-gpio">—</td>
+                <td class="pin-label">SD3</td>
+                <td class="pin-gpio">10</td>
                 <td class="pin-gpio">7</td>
                 <td class="pin-label">SD0</td>
-                <td class="pin-gpio">—</td>
-                <td class="pin-label">GND</td>
-                <td class="pin-conn right active"><span class="wire-dot wire-black"></span>Ground</td>
+                <td class="pin-gpio">6</td>
+                <td class="pin-label">CLK</td>
+                <td class="pin-conn right unused">flash</td>
             </tr>
         </table>
+        <!-- Note about power pins -->
+        <div style="font-size:7px; color:#666; text-align:center; padding:4px; background:#f0f0f0;">
+            <strong>Power:</strong> 3V3/VCC (Row 8 inside) = 3.3V output | GND at rows 1, 7, 10 |
+            <strong>I2C:</strong> SCL=GPIO22, SDA=GPIO21 (Right inside, Row 3-4)
+        </div>
     </div>
 
     <!-- Drone Pin Usage Quick Reference -->
     <div style="display:flex; gap:10px; margin-top:10px;">
         <div style="flex:1; background:#fff3cd; border:1px solid #856404; border-radius:5px; padding:6px;">
-            <strong style="color:#856404; font-size:10px;">Motors (Inside Row - Yellow)</strong>
+            <strong style="color:#856404; font-size:10px;">Motors</strong>
             <div style="font-size:8px; margin-top:3px;">
-                <span class="wire-dot wire-yellow"></span> M1 (RR): GPIO 13 @ TCK<br>
-                <span class="wire-dot wire-yellow"></span> M3 (RL): GPIO 14 @ TMS
-            </div>
-        </div>
-        <div style="flex:1; background:#e8f4fc; border:1px solid #1a5276; border-radius:5px; padding:6px;">
-            <strong style="color:#1a5276; font-size:10px;">Motors (Outside Row - Yellow)</strong>
-            <div style="font-size:8px; margin-top:3px;">
-                <span class="wire-dot wire-yellow"></span> M2 (FR): GPIO 25 @ 25<br>
-                <span class="wire-dot wire-yellow"></span> M4 (FL): GPIO 27 @ 27
+                <span class="wire-dot wire-yellow"></span> M1 (RR): GPIO 13 @ TCK (L inside)<br>
+                <span class="wire-dot wire-yellow"></span> M2 (FR): GPIO 25 @ 25 (R outside)<br>
+                <span class="wire-dot wire-yellow"></span> M3 (RL): GPIO 14 @ TMS (L outside)<br>
+                <span class="wire-dot wire-yellow"></span> M4 (FL): GPIO 27 @ 27 (R outside)
             </div>
         </div>
         <div style="flex:1; background:#e8d4f4; border:1px solid #7d3c98; border-radius:5px; padding:6px;">
-            <strong style="color:#7d3c98; font-size:10px;">I2C (Inside Row - Purple)</strong>
+            <strong style="color:#7d3c98; font-size:10px;">I2C (Right Inside)</strong>
             <div style="font-size:8px; margin-top:3px;">
-                <span class="wire-dot wire-purple"></span> SDA: GPIO 21<br>
-                <span class="wire-dot wire-purple"></span> SCL: GPIO 22
+                <span class="wire-dot wire-purple"></span> SCL: GPIO 22 (row 3)<br>
+                <span class="wire-dot wire-purple"></span> SDA: GPIO 21 (row 4)
             </div>
         </div>
         <div style="flex:1; background:#d5f4e6; border:1px solid #27ae60; border-radius:5px; padding:6px;">
-            <strong style="color:#27ae60; font-size:10px;">Peripherals (Outside Row)</strong>
+            <strong style="color:#27ae60; font-size:10px;">Peripherals</strong>
             <div style="font-size:8px; margin-top:3px;">
-                <span class="wire-dot wire-blue"></span> Buzzer: GPIO 32<br>
-                <span class="wire-dot wire-green"></span> LED: GPIO 33<br>
-                <span class="wire-dot wire-blue"></span> VBAT: GPIO 34
+                <span class="wire-dot wire-blue"></span> Buzzer: GPIO 32 (R outside)<br>
+                <span class="wire-dot wire-green"></span> LED: GPIO 33 (L outside)<br>
+                <span class="wire-dot wire-blue"></span> VBAT: GPIO 34 (L outside)
+            </div>
+        </div>
+        <div style="flex:1; background:#e8f4fc; border:1px solid #1a5276; border-radius:5px; padding:6px;">
+            <strong style="color:#1a5276; font-size:10px;">Power</strong>
+            <div style="font-size:8px; margin-top:3px;">
+                <span class="wire-dot wire-orange"></span> 3V3: Row 8 (L inside)<br>
+                <span class="wire-dot wire-orange"></span> VCC: Row 8 (R inside)<br>
+                <span class="wire-dot wire-black"></span> GND: Rows 1, 7, 10
             </div>
         </div>
     </div>
@@ -549,18 +556,18 @@
             <th>Connects To</th>
         </tr>
         <tr><td>Motor 1 (RR)</td><td>13</td><td>Left</td><td>Inside</td><td>TCK</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
-        <tr><td>Motor 2 (FR)</td><td>25</td><td>Left</td><td>Outside</td><td>25</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
-        <tr><td>Motor 3 (RL)</td><td>14</td><td>Right</td><td>Inside</td><td>TMS</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
-        <tr><td>Motor 4 (FL)</td><td>27</td><td>Left</td><td>Outside</td><td>27</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
-        <tr><td>Buzzer</td><td>32</td><td>Left</td><td>Outside</td><td>32</td><td>2N2222 Base via 1kΩ</td></tr>
-        <tr><td>Status LED</td><td>33</td><td>Right</td><td>Outside</td><td>33</td><td>LED Anode via 220Ω</td></tr>
-        <tr><td>Battery ADC</td><td>34</td><td>Right</td><td>Outside</td><td>34</td><td>Voltage Divider Center</td></tr>
-        <tr><td>I2C SDA</td><td>21</td><td>Right</td><td>Inside</td><td>SDA</td><td>MPU6050 SDA</td></tr>
-        <tr><td>I2C SCL</td><td>22</td><td>Left</td><td>Inside</td><td>SCL</td><td>MPU6050 SCL</td></tr>
+        <tr><td>Motor 2 (FR)</td><td>25</td><td>Right</td><td>Outside</td><td>25</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
+        <tr><td>Motor 3 (RL)</td><td>14</td><td>Left</td><td>Outside</td><td>TMS</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
+        <tr><td>Motor 4 (FL)</td><td>27</td><td>Right</td><td>Outside</td><td>27</td><td>Si2302 MOSFET Gate via 10kΩ</td></tr>
+        <tr><td>Buzzer</td><td>32</td><td>Right</td><td>Outside</td><td>32</td><td>2N2222 Base via 1kΩ</td></tr>
+        <tr><td>Status LED</td><td>33</td><td>Left</td><td>Outside</td><td>33</td><td>LED Anode via 220Ω</td></tr>
+        <tr><td>Battery ADC</td><td>34</td><td>Left</td><td>Outside</td><td>34</td><td>Voltage Divider Center (input only)</td></tr>
+        <tr><td>I2C SDA</td><td>21</td><td>Right</td><td>Inside</td><td>21</td><td>MPU6050 SDA</td></tr>
+        <tr><td>I2C SCL</td><td>22</td><td>Right</td><td>Inside</td><td>22</td><td>MPU6050 SCL</td></tr>
     </table>
 
     <div class="page-footer">
-        ESP32 MultiWii Drone Circuit Diagram v2.0 | <span class="page-number">Page 1 of 3</span>
+        ESP32 MultiWii Drone Circuit Diagram v2.0 | <span class="page-number">Page 1 of 4</span>
     </div>
 </div>
 
@@ -722,13 +729,106 @@ CW = Clockwise                          CCW = Counter-Clockwise
     </div>
 
     <div class="page-footer">
-        ESP32 MultiWii Drone Circuit Diagram v2.0 | <span class="page-number">Page 2 of 3</span>
+        ESP32 MultiWii Drone Circuit Diagram v2.0 | <span class="page-number">Page 2 of 4</span>
     </div>
 </div>
 
-<!-- ========== PAGE 3: Schematics & BOM ========== -->
+<!-- ========== PAGE 3: Complete System Schematic ========== -->
 <div class="page">
-    <div class="page-title">Page 3: Circuit Schematics & Bill of Materials</div>
+    <div class="page-title">Page 3: Complete System Schematic</div>
+
+    <!-- Full System Schematic -->
+    <div class="schematic-box" style="margin-bottom:15px;">
+        <h4>ESP32 MultiWii Drone - Full Circuit Diagram</h4>
+<pre style="font-size:7px; line-height:1.15;">
+                                    ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+                                    │                           ESP32 MH-ET LIVE MiniKit                                       │
+                                    │                                                                                          │
+   ┌──────────┐                     │  ┌─────────────────────────────────────────────────────────────────────────────────┐   │
+   │  1S LiPo │                     │  │                              PIN CONNECTIONS                                     │   │
+   │  Battery │                     │  │                                                                                  │   │
+   │ 3.7V nom │                     │  │   LEFT SIDE (Outside)              ESP32              RIGHT SIDE (Outside)      │   │
+   └────┬─────┘                     │  │   ──────────────────              ──────              ───────────────────        │   │
+        │                           │  │   GND ─────────────────┐    ┌─────────────────── RST                             │   │
+        │   ┌───────────────────────┼──┼─► 27 ──── MOTOR 4 (FL) │    │  MOTOR 1 (RR) ──── 13 (TCK inside) ◄───────────┐  │   │
+        │   │                       │  │   25 ──── MOTOR 2 (FR) │    │                     26                          │  │   │
+        │   │  ┌────────────────────┼──┼─► 32 ──── BUZZER       │    │      STATUS LED ──── 33 ◄───────────────────┐   │  │   │
+        │   │  │                    │  │                        │    │         VBAT ADC ──── 34 ◄──────────────┐   │   │  │   │
+        │   │  │                    │  │                        │    │  MOTOR 3 (RL) ──── 14 (TMS inside) ◄────┼───┼───┼──┼───┤
+        │   │  │                    │  │   LEFT SIDE (Inside)   │    │   RIGHT SIDE (Inside)                   │   │   │  │   │
+        │   │  │                    │  │   ─────────────────    │    │   ──────────────────                    │   │   │  │   │
+        │   │  │  ┌─────────────────┼──┼─► SCL (22) ────────────┼────┼──────────────── SDA (21) ◄──────────────┼───┼───┼──┼───┤
+        │   │  │  │                 │  │   TCK (13) ◄───────────┼────┼─ MOTOR 1 (RR)   TMS (14) ◄──────────────┼───┼───┼──┘   │
+        │   │  │  │                 │  │                        │    │                                         │   │   │      │
+        │   │  │  │                 │  │   3V3 ◄────────────────┼────┼───────────────────► 3V3                 │   │   │      │
+        │   │  │  │                 │  │   GND ◄────────────────┼────┼───────────────────► GND                 │   │   │      │
+        │   │  │  │                 │  │                        │    │                                         │   │   │      │
+        │   │  │  │                 │  └────────────────────────┴────┴─────────────────────────────────────────┼───┼───┼──────┘
+        │   │  │  │                 │                                                                          │   │   │
+        │   │  │  │                 └──────────────────────────────────────────────────────────────────────────┼───┼───┼──────┐
+        │   │  │  │                                                                                            │   │   │      │
+        │   │  │  │   ┌────────────────────────────────────────────────────────────────────────────────────────┘   │   │      │
+        │   │  │  │   │                                                                                            │   │      │
+        │   │  │  │   │   ┌────────────────────────────────────────────────────────────────────────────────────────┘   │      │
+        │   │  │  │   │   │                                                                                            │      │
+        │   │  │  │   │   │   ┌────────────────────────────────────────────────────────────────────────────────────────┘      │
+        │   │  │  │   │   │   │                                                                                               │
+        ▼   ▼  ▼  ▼   ▼   ▼   ▼                                                                                               │
+   ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐ │
+   │                                             POWER DISTRIBUTION                                                          │ │
+   │                                                                                                                         │ │
+   │    Battery +  ──┬──────────────────────────┬──────────────────────────┬──────────────────────────┬──────────────────┐  │ │
+   │                 │                          │                          │                          │                  │  │ │
+   │                 ▼                          ▼                          ▼                          ▼                  │  │ │
+   │           ┌──────────┐              ┌──────────┐              ┌──────────┐              ┌──────────┐                 │  │ │
+   │           │ MPM3610  │              │  Motor   │              │  Motor   │              │  Motor   │    ┌──────────┐ │  │ │
+   │           │  3.3V    │              │  1 (RR)  │              │  2 (FR)  │              │  3 (RL)  │    │  Motor   │ │  │ │
+   │           │  REG     │              │ ┌──────┐ │              │ ┌──────┐ │              │ ┌──────┐ │    │  4 (FL)  │ │  │ │
+   │           └────┬─────┘              │ │ M    │ │              │ │ M    │ │              │ │ M    │ │    │ ┌──────┐ │ │  │ │
+   │                │                    │ └──┬───┘ │              │ └──┬───┘ │              │ └──┬───┘ │    │ │ M    │ │ │  │ │
+   │                │                    │    │     │              │    │     │              │    │     │    │ └──┬───┘ │ │  │ │
+   │                ▼                    │    ▼     │              │    ▼     │              │    ▼     │    │    │     │ │  │ │
+   │           ┌─────────┐              │ ┌──────┐ │              │ ┌──────┐ │              │ ┌──────┐ │    │    ▼     │ │  │ │
+   │           │ ESP32   │              │ │Si2302│ │              │ │Si2302│ │              │ │Si2302│ │    │ ┌──────┐ │ │  │ │
+   │           │  3V3    │              │ └──┬───┘ │              │ └──┬───┘ │              │ └──┬───┘ │    │ │Si2302│ │ │  │ │
+   │           │  Pin    │              │    │     │              │    │     │              │    │     │    │ └──┬───┘ │ │  │ │
+   │           │    │    │              │    │G    │              │    │G    │              │    │G    │    │    │G    │ │  │ │
+   │           │    ▼    │              │    │     │              │    │     │              │    │     │    │    │     │ │  │ │
+   │           │ MPU6050 │              │ GPIO 13  │              │ GPIO 25  │              │ GPIO 14  │    │ GPIO 27  │ │  │ │
+   │           │ VCC=3.3V│              └──────────┘              └──────────┘              └──────────┘    └──────────┘ │  │ │
+   │           └─────────┘                                                                                               │  │ │
+   │                                                                                                                     │  │ │
+   │    Battery -  ──┴────────────────────────────────────────────────────────────────────────────────────────────────GND│  │ │
+   └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │ │
+                                                                                                                           │ │
+   ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘ │
+   │                                             PERIPHERAL CIRCUITS                                                         │
+   │                                                                                                                         │
+   │   ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────┐     ┌─────────────────────────────┐  │
+   │   │  I2C IMU (MPU6050)  │     │   BUZZER CIRCUIT    │     │    LED CIRCUIT      │     │   BATTERY MONITOR           │  │
+   │   │                     │     │                     │     │                     │     │                             │  │
+   │   │  VCC ◄── 3.3V       │     │  3.3V ──► (+)Buzz   │     │  GPIO 33            │     │  Battery + ──[10k]──┬──[10k]──GND
+   │   │  GND ──► GND        │     │          (-) ──► C  │     │     │               │     │                     │       │  │
+   │   │  SDA ◄──► GPIO 21   │     │            2N2222   │     │     └──[220Ω]──►    │     │                  GPIO 34    │  │
+   │   │  SCL ◄──► GPIO 22   │     │          B ◄──[1k]  │     │              LED    │     │                (ADC Input)  │  │
+   │   │                     │     │          │          │     │              │      │     │                             │  │
+   │   │  (4.7k pullups      │     │       GPIO 32       │     │             GND     │     │  Vout = Vin × 0.5           │  │
+   │   │   on module)        │     │          E ──► GND  │     │                     │     │  (1.5V - 2.1V range)        │  │
+   │   └─────────────────────┘     └─────────────────────┘     └─────────────────────┘     └─────────────────────────────┘  │
+   └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+</pre>
+    </div>
+
+    <div class="page-footer">
+        ESP32 MultiWii Drone Circuit Diagram v2.0 | <span class="page-number">Page 3 of 4</span>
+    </div>
+</div>
+
+<!-- ========== PAGE 4: Component Schematics & BOM ========== -->
+<div class="page">
+    <div class="page-title">Page 4: Component Schematics & Bill of Materials</div>
+
+    <h3>Component Schematics (Detail Views)</h3>
 
     <div class="component-grid">
         <div class="schematic-box">
@@ -896,7 +996,7 @@ CW = Clockwise                          CCW = Counter-Clockwise
 
     <div class="page-footer">
         ESP32 MultiWii Drone Circuit Diagram v2.0 | Based on ELECTRONOOBS design, modified for ESP-NOW<br>
-        <span class="page-number">Page 3 of 3</span>
+        <span class="page-number">Page 4 of 4</span>
     </div>
 </div>
 
