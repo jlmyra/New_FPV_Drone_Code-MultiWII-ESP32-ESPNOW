@@ -8,6 +8,7 @@
   #include <EEPROM.h>  // ESP32 EEPROM library
   #define EEPROM_SIZE 4096  // ESP32 EEPROM size
   static bool eeprom_initialized = false;
+  static bool loading_defaults = false;  // Prevent infinite recursion
 #else
   #include <avr/eeprom.h>  // AVR EEPROM
 #endif
@@ -72,9 +73,15 @@ bool readEEPROM() {
   #endif
   eeprom_read_block((void*)&conf, (void*)(global_conf.currentSet * sizeof(conf) + sizeof(global_conf)), sizeof(conf));
   if(calculate_sum((uint8_t*)&conf, sizeof(conf)) != conf.checksum) {
-    blinkLED(6,100,3);    
+    #if defined(ESP32)
+      // Prevent infinite recursion: LoadDefaults -> writeParams -> readEEPROM -> LoadDefaults
+      if (loading_defaults) {
+        return false;
+      }
+    #endif
+    blinkLED(6,100,3);
     SET_ALARM_BUZZER(ALRM_FAC_CONFIRM, ALRM_LVL_CONFIRM_ELSE);
-    LoadDefaults();                 // force load defaults 
+    LoadDefaults();                 // force load defaults
     return false;                   // defaults loaded, don't reload constants (EEPROM life saving)
   }
   // 500/128 = 3.90625    3.9062 * 3.9062 = 15.259   1526*100/128 = 1192
@@ -180,6 +187,9 @@ void update_constants() {
 }
 
 void LoadDefaults() {
+  #if defined(ESP32)
+    loading_defaults = true;  // Set flag to prevent recursion
+  #endif
   uint8_t i;
   #ifdef SUPPRESS_DEFAULTS_FROM_GUI
     // do nothing
@@ -248,6 +258,9 @@ void LoadDefaults() {
     conf.rcExpo8   =  0;
   #endif
   update_constants(); // this will also write to eeprom
+  #if defined(ESP32)
+    loading_defaults = false;  // Clear flag
+  #endif
 }
 
 #ifdef LOG_PERMANENT

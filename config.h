@@ -506,7 +506,7 @@ At this moment you can use this function only with WinGUI 2.3 release. MultiWiiC
     // Motor PWM pins (using available GPIO pins on MH ET Live MiniKit)
     #define ESP32_MOTOR1_PIN 13  // Motor 1 (rear in QUAD+)
     #define ESP32_MOTOR2_PIN 25  // Motor 2 (right)
-    #define ESP32_MOTOR3_PIN 14  // Motor 3 (left)
+    #define ESP32_MOTOR3_PIN 14  // Motor 3 (left) - GPIO14 is safe for PWM
     #define ESP32_MOTOR4_PIN 27  // Motor 4 (front)
 
     // Buzzer pin

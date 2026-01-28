@@ -248,6 +248,13 @@ void GYRO_Common() {
       return;
     #else
       calibratingG--;
+      // DEBUG: Print gyro calibration progress
+      if (calibratingG % 100 == 0) {
+        Serial.print("GyroCalib: "); Serial.print(calibratingG);
+        Serial.print(" gyroADC: "); Serial.print(imu.gyroADC[0]);
+        Serial.print(","); Serial.print(imu.gyroADC[1]);
+        Serial.print(","); Serial.println(imu.gyroADC[2]);
+      }
     #endif
   }
 

@@ -13,14 +13,14 @@
 // PWM Configuration
 // Note: ESP32 Arduino Core 3.x uses pin numbers directly in ledcWrite()
 // instead of channel numbers (legacy API used channels)
-#define PWM_FREQUENCY 32000  // 32kHz for brushed motors (can be adjusted)
+#define PWM_FREQUENCY 16000  // 16kHz for brushed motors (lower = more torque, may whine)
 #define PWM_RESOLUTION 10    // 10-bit resolution (0-1023)
 
 // Motor pins for ESP32 MH ET Live MiniKit
 uint8_t ESP32_PWM_PIN[8] = {
   ESP32_MOTOR1_PIN,  // Motor 1 - GPIO13
   ESP32_MOTOR2_PIN,  // Motor 2 - GPIO25
-  ESP32_MOTOR3_PIN,  // Motor 3 - GPIO14
+  ESP32_MOTOR3_PIN,  // Motor 3 - GPIO14 (Rear Left)
   ESP32_MOTOR4_PIN,  // Motor 4 - GPIO27
   0, 0, 0, 0         // Additional motors if needed
 };
@@ -31,13 +31,19 @@ uint8_t ESP32_PWM_PIN[8] = {
 void initOutput() {
   // Configure LEDC PWM for each motor
   // ESP32 Arduino Core 3.x uses ledcAttach instead of ledcSetup+ledcAttachPin
+  Serial.println("Initializing motor PWM...");
   for (uint8_t i = 0; i < 4; i++) {
-    ledcAttach(ESP32_PWM_PIN[i], PWM_FREQUENCY, PWM_RESOLUTION);
+    Serial.print("  Motor "); Serial.print(i+1);
+    Serial.print(" on GPIO "); Serial.print(ESP32_PWM_PIN[i]);
+    bool success = ledcAttach(ESP32_PWM_PIN[i], PWM_FREQUENCY, PWM_RESOLUTION);
+    Serial.print(" - ledcAttach: "); Serial.println(success ? "OK" : "FAILED");
     ledcWrite(ESP32_PWM_PIN[i], 0);  // Start with motors off
   }
 
   // Configure buzzer PWM
-  ledcAttach(ESP32_BUZZER_PIN, 2000, 8);  // 2kHz, 8-bit resolution for buzzer
+  Serial.print("Buzzer on GPIO "); Serial.print(ESP32_BUZZER_PIN);
+  bool buzzerOk = ledcAttach(ESP32_BUZZER_PIN, 2000, 8);  // 2kHz, 8-bit resolution for buzzer
+  Serial.print(" - ledcAttach: "); Serial.println(buzzerOk ? "OK" : "FAILED");
   ledcWrite(ESP32_BUZZER_PIN, 0);
 
   // Configure LED pin
@@ -50,9 +56,40 @@ void initOutput() {
 /**************************************************************************************/
 /***************  Writes the Motors values to LEDC PWM              *******************/
 /**************************************************************************************/
+// Debug: set to true to print motor values
+#define DEBUG_MOTORS true
+
 void writeMotors() {
   // ESP32 motor control using LEDC
   // Input range: [1000:2000] => Output range: [0:1023] for 10-bit PWM
+
+  #if DEBUG_MOTORS
+  static unsigned long lastMotorDebug = 0;
+  static bool printedLookup = false;
+  if (!printedLookup) {
+    printedLookup = true;
+    Serial.print("lookupThrottleRC: ");
+    for (int i = 0; i < 11; i++) {
+      Serial.print(lookupThrottleRC[i]); Serial.print(" ");
+    }
+    Serial.println();
+    Serial.print("thrMid8:"); Serial.print(conf.thrMid8);
+    Serial.print(" thrExpo8:"); Serial.println(conf.thrExpo8);
+  }
+  if (millis() - lastMotorDebug > 500) {
+    lastMotorDebug = millis();
+    Serial.print("Motors: ");
+    for (int i = 0; i < NUMBER_MOTOR; i++) {
+      Serial.print(motor[i]); Serial.print(" ");
+    }
+    Serial.print(" Armed:"); Serial.print(f.ARMED);
+    Serial.print(" Thr:"); Serial.print(rcData[THROTTLE]);
+    Serial.print(" rcCmd:"); Serial.print(rcCommand[THROTTLE]);
+    Serial.print(" PID R:"); Serial.print(axisPID[ROLL]);
+    Serial.print(" P:"); Serial.print(axisPID[PITCH]);
+    Serial.print(" Y:"); Serial.println(axisPID[YAW]);
+  }
+  #endif
 
   #if (NUMBER_MOTOR > 0)
     // Convert from servo range (1000-2000) to PWM duty cycle (0-1023)

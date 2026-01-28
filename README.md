@@ -15,6 +15,14 @@ This is a modified version of the MultiWii brushed drone flight controller, adap
   - SCL: GPIO22
   - VCC: 3.3V
   - GND: GND
+  - **AD0: Connect to GND** (sets I2C address to 0x68)
+
+**IMPORTANT - MPU6050 AD0 Pin:**
+The AD0 pin on the MPU6050 determines its I2C address:
+- **AD0 → GND**: Address = 0x68 (default, used by this firmware)
+- **AD0 → VCC**: Address = 0x69
+
+If AD0 is left floating (unconnected), the address may be unstable and cause I2C communication failures. **Always connect AD0 to GND.**
 
 ### Motors (Brushed DC Motors)
 - 4x Brushed DC motors with compatible ESCs
@@ -127,6 +135,35 @@ The motors are arranged in an X configuration with the following positions:
 
 **Important:** Diagonal motors spin in the same direction. This configuration provides yaw control through differential thrust.
 
+## Power Requirements
+
+### CRITICAL: USB vs Battery Power
+
+| Power Source | Max Current | Suitable For |
+|--------------|-------------|--------------|
+| **USB (5V)** | ~500mA | Configuration, IMU calibration, communication testing |
+| **1S LiPo (3.7V)** | 5-10A+ | **Full motor operation (REQUIRED)** |
+
+⚠️ **WARNING:** USB power alone (~500mA) **cannot** power the motors. Attempting to spin motors on USB will cause:
+- ESP32 resets (brown-out detection triggered)
+- Erratic behavior
+- Potential damage to USB port
+
+**Always connect a LiPo battery before arming the drone.**
+
+### What Works on USB Power Only
+- ✅ ESP-NOW communication testing
+- ✅ IMU/gyro calibration
+- ✅ MultiWiiConf GUI connection
+- ✅ LED and buzzer testing
+- ✅ Configuration changes
+- ❌ Motor spinning (will reset ESP32)
+
+### Motor Current Draw
+4 brushed motors can draw **2-4A total** at full throttle, with **peak currents even higher** during startup. A 1S LiPo with at least 25C rating is recommended.
+
+---
+
 ## Battery Voltage Monitoring (1S LiPo)
 
 The drone uses GPIO34 (ADC1_CH6) for battery voltage monitoring. For a **1S LiPo battery (3.0V - 4.2V)**:
@@ -180,6 +217,145 @@ Update these values in [config.h](config.h) lines 927-929:
 - **VBATLEVEL_CRIT:** 33 (3.3V - critical, land immediately!)
 
 **Note:** Values are in 0.1V units (e.g., 37 = 3.7V)
+
+---
+
+## I2C Wiring Best Practices
+
+The MPU6050 communicates with the ESP32 via I2C. Proper wiring is critical for reliable gyro/accelerometer data.
+
+### Do NOT Twist I2C Wires
+
+Unlike differential signals (USB, Ethernet), I2C is **single-ended**. Twisting SDA and SCL together causes:
+- **Capacitive coupling** between lines - clock edges induce noise on data
+- **Crosstalk** - fast SCL transitions corrupt SDA readings
+- **Increased capacitance** - slows signal edges, causes communication failures
+
+### Recommended Wiring
+
+1. **Keep wires short** - under 10cm is ideal for 400kHz I2C
+2. **Run SDA and SCL parallel** with 1-2mm gap between them
+3. **Include a ground wire** running alongside (reduces noise pickup)
+4. **Route away from motor wires** and the ESP32 antenna area
+5. **Use shielded cable** for longer runs (shield grounded at one end only)
+
+### Pull-up Resistors
+
+The MPU6050 module typically includes 4.7kΩ pull-ups. If using a bare chip:
+- Add 4.7kΩ pull-up resistors from SDA and SCL to 3.3V
+- For longer wires, use 2.2kΩ pull-ups
+
+### Mounting the MPU6050
+
+If mounting the IMU above the ESP32:
+- **Vibration isolation** is critical - use foam tape or rubber standoffs
+- **Heat** from the ESP32 can cause gyro drift - maximize airflow
+- **EMI** from WiFi radio may affect readings - consider a ground plane between them
+
+---
+
+## PWM Frequency Tuning
+
+The motor PWM frequency affects performance characteristics of brushed motors.
+
+### Current Setting
+
+```cpp
+#define PWM_FREQUENCY 16000  // 16kHz - balanced setting
+```
+
+Edit in [Output_ESP32.cpp:16](Output_ESP32.cpp#L16)
+
+### Frequency Trade-offs
+
+| Frequency | Pros | Cons |
+|-----------|------|------|
+| **8kHz** | Maximum torque, best low-speed response | Audible whine, motor heating |
+| **16kHz** | Good torque, minimal audible noise | Slight efficiency loss vs 8kHz |
+| **32kHz** | Silent operation, less motor heating | Reduced low-speed torque |
+
+### How It Works
+
+Lower PWM frequencies allow higher **peak currents** during each pulse:
+- More time for current to ramp up through motor inductance
+- Higher peak current = stronger magnetic field = more torque
+- Better responsiveness at low throttle (important for hover stability)
+
+Higher frequencies spread current more evenly:
+- Smoother motor operation
+- Less audible noise (above human hearing at 20kHz+)
+- Less efficient due to switching losses
+
+### Recommendation
+
+- **16kHz** - Best balance for most builds (current default)
+- **8kHz** - If you need more low-end punch and don't mind motor whine
+- **32kHz** - If noise is a priority and you have headroom on thrust
+
+---
+
+## Propeller Selection Guide
+
+Choosing the right propeller affects flight characteristics significantly.
+
+### Blade Count Comparison
+
+| Blades | Efficiency | Thrust | Response | Noise |
+|--------|------------|--------|----------|-------|
+| **2-blade** | Best | Lower | Slower | Quietest |
+| **3-blade** | Good | Medium | Medium | Medium |
+| **4-blade** | Lower | Highest | Fastest | Loudest |
+
+**2-blade props:**
+- Most efficient (less blade interference)
+- Smoother, quieter operation
+- Best for longer flight times
+- Slower response to throttle changes
+
+**3-blade props:**
+- Good compromise between efficiency and thrust
+- Popular for freestyle/general use
+- Moderate noise levels
+
+**4-blade props:**
+- Maximum thrust from given diameter
+- Fastest throttle response
+- Best for heavy builds or aggressive flying
+- Shortest flight times, loudest
+
+### Diameter vs Blade Count Example
+
+Comparing **46mm 2-blade** vs **31mm 3-blade**:
+
+| Property | 46mm 2-blade | 31mm 3-blade |
+|----------|--------------|--------------|
+| Disc area | 1662 mm² | 755 mm² |
+| Static thrust | Higher | Lower |
+| Efficiency | Better | Worse |
+| Response | Slower | Faster |
+| Motor load | Higher | Lower |
+| Noise | Quieter | Higher pitch |
+
+**46mm 2-blade** advantages:
+- 2.2x more disc area = more air moved = more lift
+- Better hover efficiency
+- Quieter at same thrust level
+
+**31mm 3-blade** advantages:
+- Lower rotational inertia = faster RPM changes
+- Snappier response for acrobatic flying
+- Less stress on motors (lower torque required)
+- Fits in tighter spaces
+
+### Recommendation for This Build
+
+For a brushed micro quad:
+- **Larger 2-blade** (40-55mm) - Best for efficiency and flight time
+- **Smaller 3-blade** (31-40mm) - Better for indoor flying and quick maneuvers
+
+Match prop size to your motor's recommended range. Oversized props will overheat motors; undersized props waste motor capability.
+
+---
 
 ## Software Setup
 
@@ -306,13 +482,13 @@ Pin definitions are in `config.h` starting at line 501:
 ## PWM Configuration
 
 The ESP32 uses **LEDC (LED Controller)** for PWM generation:
-- **Frequency**: 32kHz (optimized for brushed motors)
+- **Frequency**: 16kHz (optimized for brushed motors - see [PWM Frequency Tuning](#pwm-frequency-tuning) for details)
 - **Resolution**: 10-bit (0-1023)
 - **Channels**: 0-3 for motors, 4 for buzzer
 
-To change PWM frequency, edit `Output_ESP32.cpp`:
+To change PWM frequency, edit [Output_ESP32.cpp:16](Output_ESP32.cpp#L16):
 ```cpp
-#define PWM_FREQUENCY 32000  // Change this value
+#define PWM_FREQUENCY 16000  // 8kHz=more torque, 32kHz=quieter
 ```
 
 ## Uploading the Code
@@ -378,10 +554,37 @@ To invert a channel, swap the map() function parameters.
 - Throttle goes to 0
 - All other channels center to 128 (1500µs equivalent)
 
-### Arming
+### Arming and Disarming
+
+**Arming Thresholds:**
+- MINCHECK = 1100 (stick considered "low" below this)
+- MAXCHECK = 1900 (stick considered "high" above this)
+- Stick values are mapped from 0-255 (transmitter) to 1000-2000 (RC PWM)
+
+**To ARM the drone:**
+1. Move the **left joystick to the bottom-right corner**
+2. Hold for ~0.4 seconds (20 cycles)
+3. This means: Throttle DOWN (low) + Yaw RIGHT (high)
+4. LED pattern will change and buzzer may beep to indicate armed state
+
+**To DISARM the drone:**
+1. Move the **left joystick to the bottom-left corner**
+2. Hold for ~0.4 seconds
+3. This means: Throttle DOWN (low) + Yaw LEFT (low)
+
+**Why both DOWN and RIGHT?**
+The joystick has two independent axes (two potentiometers):
+- Y-axis (vertical) controls Throttle
+- X-axis (horizontal) controls Yaw
+
+Moving to the corner activates both axes simultaneously - they're independent measurements.
+
+**Configuration:**
 - Configured in `config.h`
-- By default: throttle down + yaw right to arm
-- Configure via `#define ALLOW_ARM_DISARM_VIA_TX_YAW`
+- Default: `#define ALLOW_ARM_DISARM_VIA_TX_YAW` (throttle down + yaw)
+- Alternative: `#define ALLOW_ARM_DISARM_VIA_TX_ROLL` (throttle down + roll)
+
+**Safety:** `ONLYARMWHENFLAT` prevents arming when the drone is tilted.
 
 ## Performance Notes
 

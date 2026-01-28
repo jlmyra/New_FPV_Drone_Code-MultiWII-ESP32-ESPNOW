@@ -8,6 +8,9 @@
 
 #if defined(ESP_NOW_RX)
 
+// Set to true to print debug info to Serial Monitor
+#define DEBUG_ESPNOW_ARM false
+
 #include <esp_now.h>
 #include <WiFi.h>
 
@@ -168,11 +171,25 @@ void ESPNOW_Read_RC() {
 
   // Map received data to RC channels
   // Standard mapping: Left stick = Throttle/Yaw, Right stick = Pitch/Roll
-  // If your channels are inverted, reverse the map values (swap 1000/2000)
+  // Transmitter already handles axis inversion, so map directly 0-255 -> 1000-2000
   espnow_rcData[THROTTLE] = map(MyData.throttle, 0, 255, 1000, 2000);
-  espnow_rcData[YAW] =      map(MyData.yaw,      0, 255, 2000, 1000);
+  espnow_rcData[YAW] =      map(MyData.yaw,      0, 255, 1000, 2000);  // Fixed: was inverted
   espnow_rcData[PITCH] =    map(MyData.pitch,    0, 255, 1000, 2000);
-  espnow_rcData[ROLL] =     map(MyData.roll,     0, 255, 2000, 1000);
+  espnow_rcData[ROLL] =     map(MyData.roll,     0, 255, 1000, 2000);  // Fixed: was inverted
+
+  #if DEBUG_ESPNOW_ARM
+  static unsigned long lastDebugTime = 0;
+  if (now - lastDebugTime > 500) {
+    lastDebugTime = now;
+    Serial.print("RC: THR="); Serial.print(espnow_rcData[THROTTLE]);
+    Serial.print(" YAW="); Serial.print(espnow_rcData[YAW]);
+    Serial.print(" PIT="); Serial.print(espnow_rcData[PITCH]);
+    Serial.print(" ROL="); Serial.print(espnow_rcData[ROLL]);
+    Serial.print(" | calibG="); Serial.print(calibratingG);
+    Serial.print(" accCal="); Serial.print(f.ACC_CALIBRATED);
+    Serial.print(" armed="); Serial.println(f.ARMED);
+  }
+  #endif
 
   // AUX switches: TX sends 1 when switch is ON (due to !digitalRead with INPUT_PULLUP)
   // Map: 1 (ON) -> 2000 (high), 0 (OFF) -> 1000 (low)

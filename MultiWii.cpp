@@ -11,6 +11,8 @@ November  2013     V2.3
 #if !defined(ESP32)
   #include <avr/io.h>
   #include <avr/pgmspace.h>
+#else
+  #include <WiFi.h>
 #endif
 
 #include "Arduino.h"
@@ -696,6 +698,31 @@ void setup() {
     }
   #endif
   readEEPROM();                                 // load setting data from last used profile
+
+  // TEMPORARY FIX: Force load defaults if thrMid8 is 0 (corrupt EEPROM)
+  if (conf.thrMid8 == 0) {
+    Serial.println("*** EEPROM corrupt - loading defaults ***");
+    LoadDefaults();
+  }
+
+  // ESP32 FIX: Rebuild lookup table if empty (EEPROM timing issue)
+  // The lookup table should be computed in readEEPROM(), but on ESP32 it sometimes
+  // remains all zeros. Force rebuild here to ensure motors respond to throttle.
+  if (lookupThrottleRC[5] == 0 && conf.minthrottle > 0) {
+    Serial.println("*** Lookup table empty - rebuilding ***");
+    int16_t tmp, y;
+    for(uint8_t i=0; i<11; i++) {
+      tmp = 10*i-conf.thrMid8;
+      y = conf.thrMid8;
+      if (tmp>0) y = 100-y;
+      lookupThrottleRC[i] = 100*conf.thrMid8 + tmp*( (int32_t)conf.thrExpo8*(tmp*tmp)/((uint16_t)y*y)+100-conf.thrExpo8 );
+      lookupThrottleRC[i] = conf.minthrottle + (uint32_t)((uint16_t)(MAXTHROTTLE-conf.minthrottle))* lookupThrottleRC[i]/10000;
+    }
+    Serial.print("Rebuilt lookupThrottleRC: ");
+    for(uint8_t i=0; i<11; i++) { Serial.print(lookupThrottleRC[i]); Serial.print(" "); }
+    Serial.println();
+  }
+
   blinkLED(2,40,global_conf.currentSet+1);          
 
   #if GPS
@@ -703,7 +730,7 @@ void setup() {
   #endif
 
   configureReceiver();
-  #if defined (PILOTLAMP) 
+  #if defined (PILOTLAMP)
     PL_INIT;
   #endif
   #if defined(OPENLRSv2MULTI)
